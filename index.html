@@ -10,7 +10,15 @@
       "chat-button.html",
       "chat-free.html"
     ];
+    const conditions = ['A', 'B', 'C'];
     const random = Math.floor(Math.random() * files.length);
+    const condition = conditions[random];
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let suffix = '';
+    for (let i = 0; i < 8; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+    const participantId = condition + '-' + suffix;
+    localStorage.setItem('tc_participant_id', participantId);
+    localStorage.setItem('tc_condition', condition);
     window.location.replace(files[random]);
   </script>
 </head>

@@ -223,6 +223,36 @@
       box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
     }
 
+    .end-screen {
+      margin-top: 16px;
+      padding: 20px 16px;
+      background: #1e1e2e;
+      border: 1px solid #444;
+      border-radius: 12px;
+      text-align: center;
+      color: #e0e0e0;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .end-screen .participant-id {
+      font-size: 22px;
+      font-weight: bold;
+      color: #7c8cff;
+      letter-spacing: 3px;
+      margin: 8px 0 4px;
+    }
+    .end-screen .condition-label {
+      color: #aaa;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .end-screen .survey-note {
+      font-size: 13px;
+      color: #bbb;
+      border-top: 1px solid #333;
+      padding-top: 10px;
+    }
+
     .control-hint {
       text-align: center;
       color: #999;
@@ -991,6 +1021,12 @@
     <div class="chat-controls">
       <div class="control-buttons" id="controlButtons"></div>
       <button class="restart-button hidden" id="restartButton">最初からやり直す</button>
+      <div class="end-screen hidden" id="endScreen">
+        <p style="margin:0 0 8px;">体験ありがとうございました。</p>
+        <div class="participant-id" id="displayParticipantId">--</div>
+        <div class="condition-label" id="displayCondition">--</div>
+        <div class="survey-note">このIDをアンケートに入力してください。<br>アンケートと体験ログの照合に使用します。</div>
+      </div>
       <div class="control-hint hidden" id="controlHint"></div>
     </div>
   </div>
@@ -2135,6 +2171,14 @@
       ]
     };
 
+    // 参加者ID・条件の読み込み（index.html で生成・保存済み）
+    const participantId = localStorage.getItem('tc_participant_id') || (() => {
+      const s = [...Array(8)].map(() => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]).join('');
+      return 'C-' + s;
+    })();
+    const condition = localStorage.getItem('tc_condition') || 'C';
+    const conditionName = { A: 'シチュエーションA', B: 'シチュエーションB', C: 'シチュエーションC' }[condition] || 'シチュエーションC';
+
     let currentNode = conversationData;
     let conversationHistory = [];
 
@@ -2147,7 +2191,9 @@
         game_mode: 'free',
         turn: conversationHistory.length + 1,
         level: level,
-        session_id: sessionId
+        session_id: sessionId,
+        participant_id: participantId,
+        condition: condition
       });
     }
 
@@ -2157,7 +2203,9 @@
         game_mode: 'free',
         path: conversationHistory.map(h => h.level).join('-'),
         total_turns: conversationHistory.length,
-        session_id: sessionId
+        session_id: sessionId,
+        participant_id: participantId,
+        condition: condition
       });
     }
 
@@ -2165,7 +2213,9 @@
       if (typeof gtag === 'undefined') return;
       gtag('event', 'restart', {
         game_mode: 'free',
-        session_id: sessionId
+        session_id: sessionId,
+        participant_id: participantId,
+        condition: condition
       });
     }
 
@@ -2284,6 +2334,9 @@
       controlButtons.classList.add('hidden');
       controlHint.classList.add('hidden');
       restartButton.classList.remove('hidden');
+      document.getElementById('displayParticipantId').textContent = participantId;
+      document.getElementById('displayCondition').textContent = '今回の条件：' + conditionName;
+      document.getElementById('endScreen').classList.remove('hidden');
     }
 
     function restart() {
@@ -2294,6 +2347,7 @@
       controlButtons.classList.remove('hidden');
       controlHint.classList.remove('hidden');
       restartButton.classList.add('hidden');
+      document.getElementById('endScreen').classList.add('hidden');
       addMessage(conversationData.text, 'opponent');
       updateButtons(conversationData.responses);
     }
