@@ -907,7 +907,8 @@
         <p style="margin:0 0 8px;">体験ありがとうございました。</p>
         <div class="participant-id" id="displayParticipantId">--</div>
         <div class="condition-label" id="displayCondition">--</div>
-        <div class="survey-note">このIDをアンケートに入力してください。<br>アンケートと体験ログの照合に使用します。</div>
+        <div class="survey-note">下のボタンからアンケートにお進みください。<br>参加者IDは自動で入力されます。</div>
+        <a id="surveyLink" href="#" target="_blank" style="display:inline-block;margin-top:12px;padding:12px 24px;background:#4285f4;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">アンケートに回答する</a>
       </div>
       <div class="control-hint" id="controlHint">ボタンを押して会話を進めよう</div>
     </div>
@@ -6060,6 +6061,9 @@
       restartButton.classList.remove('hidden');
       document.getElementById('displayParticipantId').textContent = participantId;
       document.getElementById('displayCondition').textContent = '今回の条件：' + conditionName;
+      const formBase = 'https://docs.google.com/forms/d/e/1FAIpQLSeBDp63keAScN5uZI-ZNKXu9slhd7FMsmeKyMoEPlEuVUflHQ/viewform';
+      const surveyUrl = formBase + '?entry.1515209354=' + encodeURIComponent(participantId) + '&entry.1902054315=' + encodeURIComponent(conditionName);
+      document.getElementById('surveyLink').href = surveyUrl;
       document.getElementById('endScreen').classList.remove('hidden');
     }
 
