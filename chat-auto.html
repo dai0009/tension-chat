@@ -843,6 +843,14 @@
       background: #667eea;
     }
   </style>
+  <!-- GA4 トラッキング -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MVDXDLFJGX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-MVDXDLFJGX');
+  </script>
 </head>
 <body>
   <!-- オンボーディング画面 -->
@@ -19520,6 +19528,44 @@
     const condition = localStorage.getItem('tc_condition') || 'A';
     const conditionName = { A: 'シチュエーションA', B: 'シチュエーションB', C: 'シチュエーションC' }[condition] || 'シチュエーションA';
 
+    // GA4 トラッキング用セッションID
+    const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+    function trackButtonClick() {
+      if (typeof gtag === 'undefined') return;
+      gtag('event', 'button_click', {
+        game_mode: 'auto',
+        turn: conversationHistory.length + 1,
+        visual_level: 'M',
+        actual_level: 'M',
+        session_id: sessionId,
+        participant_id: participantId,
+        condition: condition
+      });
+    }
+
+    function trackConversationEnd() {
+      if (typeof gtag === 'undefined') return;
+      gtag('event', 'conversation_complete', {
+        game_mode: 'auto',
+        path: conversationHistory.map(h => h.level).join('-'),
+        total_turns: conversationHistory.length,
+        session_id: sessionId,
+        participant_id: participantId,
+        condition: condition
+      });
+    }
+
+    function trackRestart() {
+      if (typeof gtag === 'undefined') return;
+      gtag('event', 'restart', {
+        game_mode: 'auto',
+        session_id: sessionId,
+        participant_id: participantId,
+        condition: condition
+      });
+    }
+
     let currentNode = conversationData;
     let conversationHistory = [];
     const chatMessages = document.getElementById('chatMessages');
@@ -19596,7 +19642,7 @@
       const button = document.createElement('button');
       button.className = 'control-button level-M';
       button.textContent = '進める';
-      button.addEventListener('click', () => handleChoice(midResponse));
+      button.addEventListener('click', () => { trackButtonClick(); handleChoice(midResponse); });
       controlButtons.appendChild(button);
     }
 
@@ -19614,6 +19660,7 @@
       hideTypingIndicator();
       if (choice.final_reply) {
         addMessage(choice.final_reply, 'opponent');
+        trackConversationEnd();
         showRestartButton();
       } else {
         addMessage(choice.opponent_reply, 'opponent');
@@ -19638,6 +19685,7 @@
     }
 
     function restart() {
+      trackRestart();
       chatMessages.innerHTML = '';
       currentNode = conversationData;
       conversationHistory = [];
