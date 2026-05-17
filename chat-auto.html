@@ -19530,14 +19530,19 @@
 
     // GA4 トラッキング用セッションID
     const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const pageStartTime = Date.now();
+    let buttonShownTime = null;
+    let conversationCompleted = false;
 
     function trackButtonClick() {
       if (typeof gtag === 'undefined') return;
+      const responseTime = buttonShownTime ? Math.round(Date.now() - buttonShownTime) : null;
       gtag('event', 'button_click', {
         game_mode: 'auto',
         turn: conversationHistory.length + 1,
         visual_level: 'M',
         actual_level: 'M',
+        response_time_ms: responseTime,
         session_id: sessionId,
         participant_id: participantId,
         condition: condition
@@ -19545,11 +19550,13 @@
     }
 
     function trackConversationEnd() {
+      conversationCompleted = true;
       if (typeof gtag === 'undefined') return;
       gtag('event', 'conversation_complete', {
         game_mode: 'auto',
         path: conversationHistory.map(h => h.level).join('-'),
         total_turns: conversationHistory.length,
+        stay_time_ms: Math.round(Date.now() - pageStartTime),
         session_id: sessionId,
         participant_id: participantId,
         condition: condition
@@ -19565,6 +19572,23 @@
         condition: condition
       });
     }
+
+    function trackConversationExit() {
+      if (typeof gtag === 'undefined' || conversationHistory.length === 0 || conversationCompleted) return;
+      gtag('event', 'conversation_exit', {
+        game_mode: 'auto',
+        turn: conversationHistory.length,
+        route_so_far: conversationHistory.map(h => h.level).join('-'),
+        stay_time_ms: Math.round(Date.now() - pageStartTime),
+        session_id: sessionId,
+        participant_id: participantId,
+        condition: condition
+      });
+    }
+    window.addEventListener('pagehide', trackConversationExit);
+    window.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') trackConversationExit();
+    });
 
     let currentNode = conversationData;
     let conversationHistory = [];
@@ -19637,7 +19661,7 @@
 
     function updateButtons(responses) {
       controlButtons.innerHTML = '';
-      // Mレベルの応答を自動選択
+      buttonShownTime = Date.now();
       const midResponse = responses.find(r => r.level === 'M') || responses[0];
       const button = document.createElement('button');
       button.className = 'control-button level-M';
@@ -19686,6 +19710,8 @@
 
     function restart() {
       trackRestart();
+      conversationCompleted = false;
+      buttonShownTime = null;
       chatMessages.innerHTML = '';
       currentNode = conversationData;
       conversationHistory = [];
